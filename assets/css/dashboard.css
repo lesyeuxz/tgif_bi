@@ -1,0 +1,257 @@
+/* === GLOBAL === */
+body, html {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #fffef6;
+  color: #1f2b16;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === HEADER === */
+.header {
+  background: linear-gradient(90deg, #1b5e20, #2e7d32);
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logout-btn {
+  color: white;
+  text-decoration: none;
+  background: #ffb300;
+  padding: 8px 14px;
+  border-radius: 5px;
+  transition: background 0.3s;
+}
+.logout-btn:hover {
+  background: #ffca28;
+}
+
+/* === MAIN LAYOUT === */
+.container {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 70px);
+  overflow: hidden;
+}
+
+/* === SIDEBAR === */
+.sidebar {
+  width: 240px;
+  background: #124116;
+  color: white;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+.sidebar h3 {
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+  color: #81c784;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.nav-item {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.nav-item.active {
+  background: rgba(255, 179, 0, 0.2);
+  color: #ffb300;
+}
+
+/* === MAIN CONTENT === */
+/* Note: Main content styling is handled in style.css for consistency */
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  background: #f5f7fa; /* light gray background instead of green */
+  color: #1f2b16;
+  min-height: 100vh;
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* === RESPONSIVE STYLES === */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 240px;
+    padding: 1.5rem;
+  }
+  
+  .dashboard-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+  }
+  
+  .card {
+    padding: 0.8rem;
+  }
+  
+  .card-value {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  
+  .sidebar.active {
+    max-height: 500px;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+    min-height: auto;
+  }
+  
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .card-value {
+    font-size: 1.3rem;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.8rem 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .header-title {
+    font-size: 1rem;
+  }
+  
+  .main-content {
+    padding: 0.8rem;
+  }
+  
+  .card {
+    padding: 0.7rem;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+  
+  .card-value {
+    font-size: 1.2rem;
+  }
+  
+  .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  select {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+  }
+}
+
+.section {
+  display: none;
+  padding: 1rem 0;
+}
+.section.active {
+  display: block;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* === CARDS === */
+.card {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+.card-title {
+  font-size: 1rem;
+  color: #1b5e20;
+}
+.card-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+/* === BUTTONS === */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2e7d32;
+  color: white;
+  transition: background 0.3s;
+}
+.btn:hover {
+  background: #1b5e20;
+}
+
+/* === FORMS === */
+select {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  margin-right: 0.5rem;
+}
+
+/* === TABLE CONTAINER === */
+.table-container {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  overflow-x: auto;
+  color: #1f2b16;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
