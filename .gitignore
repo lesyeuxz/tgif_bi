@@ -1,0 +1,33 @@
+# XAMPP / Local server files
+xampp/
+htdocs/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# PHPStorm / VSCode Config
+.idea/
+.vscode/
+
+# Vendor for Composer (if used)
+vendor/
+
+# Cache files
+*.cache
+*.log
+*.tmp
+
+# Environment / credentials
+.env
+.env.*
+
+# OS-generated
+desktop.ini
+
+# Reports folder (optional)
+reports/*.pdf
+reports/*.csv
+
+# Node modules (if frontend tools used)
+node_modules/
