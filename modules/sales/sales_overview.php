@@ -4,312 +4,358 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: /tgif_bi/index.html');
     exit;
 }
-require_once '../../api/db_connect.php';
 
-// Include FPDF library for PDF export
-require_once $_SERVER['DOCUMENT_ROOT'].'/tgif_bi/assets/libs/fpdf/fpdf.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/tgif_bi/api/db_connect_sales.php';
+require_once __DIR__ . '/services/SalesReportService.php';
 
-// Handle Exports
-if (isset($_POST['export_csv']) || isset($_POST['export_excel']) || isset($_POST['export_pdf'])) {
-
-    $sql = "SELECT s.sale_id, s.date, s.invoice_no, s.quantity, s.price, s.total, s.customer_name,
-                   p.product_name
-            FROM sales s
-            LEFT JOIN products p ON s.product_id = p.product_id
-            ORDER BY s.sale_id DESC";
-    $result = $conn->query($sql);
-
-    // CSV Export
-    if (isset($_POST['export_csv'])) {
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="sales_export.csv"');
-
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['Sale ID', 'Date', 'Invoice No', 'Product', 'Quantity', 'Price', 'Total', 'Customer']);
-
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                fputcsv($output, [
-                    $row['sale_id'],
-                    $row['date'],
-                    $row['invoice_no'],
-                    $row['product_name'] ?? $row['product_id'],
-                    $row['quantity'],
-                    number_format($row['price'],2),
-                    number_format($row['total'],2),
-                    $row['customer_name']
-                ]);
-            }
-        }
-        fclose($output);
-        exit;
-    }
-
-    // Excel Export
-    if (isset($_POST['export_excel'])) {
-        header("Content-Type: application/vnd.ms-excel");
-        header("Content-Disposition: attachment; filename=sales_export.xls");
-
-        echo "Sale ID\tDate\tInvoice No\tProduct\tQuantity\tPrice\tTotal\tCustomer\n";
-
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo $row['sale_id'] . "\t" .
-                     $row['date'] . "\t" .
-                     $row['invoice_no'] . "\t" .
-                     ($row['product_name'] ?? $row['product_id']) . "\t" .
-                     $row['quantity'] . "\t" .
-                     number_format($row['price'],2) . "\t" .
-                     number_format($row['total'],2) . "\t" .
-                     $row['customer_name'] . "\n";
-            }
-        }
-        exit;
-    }
-
-    // PDF Export
-    if (isset($_POST['export_pdf'])) {
-        $pdf = new FPDF();
-        $pdf->AddPage();
-        $pdf->SetFont('Arial','B',12);
-        $pdf->Cell(0,10,'Sales Export',0,1,'C');
-        $pdf->Ln(5);
-
-        $pdf->SetFont('Arial','B',10);
-        $pdf->Cell(15,8,'ID',1);
-        $pdf->Cell(25,8,'Date',1);
-        $pdf->Cell(30,8,'Invoice No',1);
-        $pdf->Cell(40,8,'Product',1);
-        $pdf->Cell(15,8,'Qty',1);
-        $pdf->Cell(20,8,'Price',1);
-        $pdf->Cell(20,8,'Total',1);
-        $pdf->Cell(35,8,'Customer',1);
-        $pdf->Ln();
-
-        $pdf->SetFont('Arial','',10);
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $pdf->Cell(15,8,$row['sale_id'],1);
-                $pdf->Cell(25,8,$row['date'],1);
-                $pdf->Cell(30,8,$row['invoice_no'],1);
-                $pdf->Cell(40,8,$row['product_name'] ?? $row['product_id'],1);
-                $pdf->Cell(15,8,$row['quantity'],1);
-                $pdf->Cell(20,8,number_format($row['price'],2),1);
-                $pdf->Cell(20,8,number_format($row['total'],2),1);
-                $pdf->Cell(35,8,$row['customer_name'],1);
-                $pdf->Ln();
-            }
-        }
-        $pdf->Output('D','sales_export.pdf');
-        exit;
-    }
-}
-
-// Fetch Top 5 Products
-$topSql = "SELECT p.product_name, SUM(s.quantity) AS total_quantity, SUM(s.total) AS total_revenue
-           FROM sales s
-           LEFT JOIN products p ON s.product_id = p.product_id
-           GROUP BY s.product_id
-           ORDER BY total_quantity DESC
-           LIMIT 5";
-$topResult = $conn->query($topSql);
+// Get dashboard data
+$service = new SalesReportService($conn_sales ?? new mysqli('localhost', 'root', '', 'customer_support'));
+$dashboardData = $service->getDashboardData();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sales Overview</title>
-<link rel="stylesheet" href="/tgif_bi/assets/css/style.css">
-
-<style>
-.top-products-grid {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-.top-product-card {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    padding: 12px 16px;
-    border-radius: 8px;
-    min-width: 180px;
-    flex: 1 1 180px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.tp-name {
-    font-weight: 600;
-    color: #1b5e20;
-    font-size: 0.95rem;
-}
-.tp-qty {
-    font-size: 0.85rem;
-    color: #6b7280;
-    margin-top: 4px;
-}
-
-/* ✅ Scrollable Table */
-.scroll-table {
-    max-height: 450px;
-    overflow-y: auto;
-    overflow-x: auto;
-    margin-top: 20px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    -webkit-overflow-scrolling: touch;
-}
-
-.scroll-table table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 800px;
-}
-
-/* Sticky Header */
-.scroll-table thead th {
-    position: sticky;
-    top: 0;
-    background: #1b5e20;
-    z-index: 5;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-    .top-products-grid {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .top-product-card {
-        min-width: 100%;
-        flex: 1 1 100%;
-    }
-    
-    .scroll-table {
-        max-height: 400px;
-        margin-top: 15px;
-    }
-    
-    .scroll-table table {
-        font-size: 0.85rem;
-        min-width: 700px;
-    }
-    
-    .scroll-table th,
-    .scroll-table td {
-        padding: 8px 6px;
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .top-product-card {
-        padding: 10px 12px;
-    }
-    
-    .tp-name {
-        font-size: 0.85rem;
-    }
-    
-    .tp-qty {
-        font-size: 0.75rem;
-    }
-    
-    .scroll-table {
-        max-height: 350px;
-    }
-    
-    .scroll-table table {
-        font-size: 0.75rem;
-        min-width: 600px;
-    }
-    
-    .scroll-table th,
-    .scroll-table td {
-        padding: 6px 4px;
-        font-size: 0.7rem;
-    }
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Analytics Dashboard - TGIF BI</title>
+    <link rel="stylesheet" href="/tgif_bi/assets/css/style.css">
+    <link rel="stylesheet" href="/tgif_bi/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/tgif_bi/assets/css/inventory-reports.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #2e7d32;
+        }
+        .kpi-card.primary {
+            border-left-color: #2e7d32;
+        }
+        .kpi-card.success {
+            border-left-color: #43a047;
+        }
+        .kpi-card.info {
+            border-left-color: #2196f3;
+        }
+        .kpi-card.warning {
+            border-left-color: #ffb300;
+        }
+        .kpi-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1b5e20;
+            margin-bottom: 5px;
+        }
+        .kpi-change {
+            font-size: 0.85rem;
+            color: #43a047;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .kpi-change.negative {
+            color: #e53935;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        .chart-card h3 {
+            margin-top: 0;
+            color: #1b5e20;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 450px;
+            width: 100%;
+        }
+        .chart-card canvas {
+            height: 450px !important;
+            max-height: 600px;
+        }
+        .quick-links {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .quick-links h3 {
+            margin-top: 0;
+            color: #1b5e20;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .link-card {
+            padding: 20px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .link-card:hover {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .link-card a {
+            text-decoration: none;
+            color: #1b5e20;
+            font-weight: 600;
+            display: block;
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+        .link-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .kpi-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .chart-card {
+                min-height: 400px;
+                padding: 20px;
+            }
+            .chart-wrapper {
+                height: 350px;
+            }
+            .chart-card canvas {
+                height: 350px !important;
+            }
+        }
+        @media (max-width: 480px) {
+            .kpi-cards {
+                grid-template-columns: 1fr;
+            }
+            .links-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body class="dashboard-body">
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/tgif_bi/includes/sidebar.php'; ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/tgif_bi/includes/header.php'; ?>
 
-<?php include $_SERVER['DOCUMENT_ROOT'].'/tgif_bi/includes/sidebar.php'; ?>
-
-<div class="main-content">
+<main class="main-content">
     <div class="content-wrapper">
-        <h2>Sales Overview</h2>
+        <header class="reports-header">
+            <div>
+                <p class="eyebrow">Sales Analytics</p>
+                <h1>Sales Analytics Dashboard</h1>
+                <p class="subtext">Real-time insights and key performance indicators for sales operations</p>
+            </div>
+        </header>
 
-        <!-- Top 5 Products Summary -->
-        <div class="top-products-summary">
-            <h3>Top 5 Products</h3>
-            <div class="top-products-grid">
-                <?php while($row = $topResult->fetch_assoc()): ?>
-                    <div class="top-product-card">
-                        <div class="tp-name"><?php echo htmlspecialchars($row['product_name']); ?></div>
-                        <div class="tp-qty"><?php echo $row['total_quantity']; ?> sold</div>
-                    </div>
-                <?php endwhile; ?>
+        <!-- KPI Cards -->
+        <div class="kpi-cards">
+            <div class="kpi-card primary">
+                <div class="kpi-label">Total Sales</div>
+                <div class="kpi-value">₱<?= number_format($dashboardData['total_sales'], 2); ?></div>
+                <div class="kpi-change">
+                    <span>All time</span>
+                </div>
+            </div>
+            <div class="kpi-card success">
+                <div class="kpi-label">Total Orders</div>
+                <div class="kpi-value"><?= number_format($dashboardData['total_orders'], 0); ?></div>
+                <div class="kpi-change">
+                    <span>Completed orders</span>
+                </div>
+            </div>
+            <div class="kpi-card info">
+                <div class="kpi-label">Average Order Value</div>
+                <div class="kpi-value">₱<?= number_format($dashboardData['avg_order_value'], 2); ?></div>
+                <div class="kpi-change">
+                    <span>Per transaction</span>
+                </div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-label">This Month Sales</div>
+                <div class="kpi-value">₱<?= number_format($dashboardData['this_month_sales'], 2); ?></div>
+                <div class="kpi-change <?= $dashboardData['mom_growth'] < 0 ? 'negative' : ''; ?>">
+                    <span><?= $dashboardData['mom_growth'] >= 0 ? '↑' : '↓'; ?> <?= number_format(abs($dashboardData['mom_growth']), 2); ?>%</span>
+                    <span>vs last month</span>
+                </div>
             </div>
         </div>
 
-        <!-- Scrollable Table Wrapper -->
-        <div class="scroll-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Sale ID</th>
-                        <th>Date</th>
-                        <th>Invoice No</th>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                        <th>Customer</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php
-                $sql = "SELECT s.sale_id, s.date, s.invoice_no, s.quantity, s.price, s.total, s.customer_name,
-                               p.product_name
-                        FROM sales s
-                        LEFT JOIN products p ON s.product_id = p.product_id
-                        ORDER BY s.sale_id DESC";
-                $result = $conn->query($sql);
-
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>
-                            <td>{$row['sale_id']}</td>
-                            <td>" . date("M d, Y", strtotime($row['date'])) . "</td>
-                            <td>{$row['invoice_no']}</td>
-                            <td>" . ($row['product_name'] ?? $row['product_id']) . "</td>
-                            <td>{$row['quantity']}</td>
-                            <td>" . number_format($row['price'], 2) . "</td>
-                            <td>" . number_format($row['total'], 2) . "</td>
-                            <td>{$row['customer_name']}</td>
-                        </tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='8'>No sales found.</td></tr>";
-                }
-                ?>
-                </tbody>
-            </table>
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Sales Trend - Last 7 Days</h3>
+                <div class="chart-wrapper">
+                    <canvas id="salesTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Top 3 Products</h3>
+                <div class="chart-wrapper">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
         </div>
 
-        <div class="export-buttons" style="text-align: center;">
-            <form method="post">
-                <button type="submit" name="export_csv">Export CSV</button>
-                <button type="submit" name="export_excel">Export Excel</button>
-                <button type="submit" name="export_pdf">Export PDF</button>
-            </form>
+        <!-- Quick Links -->
+        <div class="quick-links">
+            <h3>Detailed Reports</h3>
+            <div class="links-grid">
+                <div class="link-card">
+                    <a href="/tgif_bi/modules/sales/reports/sales_performance_report.php">
+                        📊 Sales Performance by Product
+                    </a>
+                    <p>View detailed product sales analysis with bar charts</p>
+                </div>
+                <div class="link-card">
+                    <a href="/tgif_bi/modules/sales/reports/sales_summary_report.php">
+                        📈 Sales Summary by Date
+                    </a>
+                    <p>Analyze sales trends over time with customizable date ranges</p>
+                </div>
+            </div>
         </div>
-
     </div>
-</div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dashboardData = <?= json_encode($dashboardData); ?>;
+
+    // Sales Trend Chart (Last 7 Days)
+    const trendCtx = document.getElementById('salesTrendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: dashboardData.last_7_days.labels,
+            datasets: [{
+                label: 'Daily Sales (₱)',
+                data: dashboardData.last_7_days.data,
+                borderColor: 'rgba(46, 125, 50, 1)',
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Sales: ₱' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Top Products Chart
+    const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    const topProducts = dashboardData.top_products || [];
+    
+    if (topProducts.length > 0) {
+        new Chart(topProductsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: topProducts.map(p => p.name),
+                datasets: [{
+                    data: topProducts.map(p => p.sales),
+                    backgroundColor: [
+                        'rgba(46, 125, 50, 0.8)',
+                        'rgba(67, 160, 71, 0.8)',
+                        'rgba(102, 187, 106, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(27, 94, 32, 1)',
+                        'rgba(46, 125, 50, 1)',
+                        'rgba(67, 160, 71, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ₱' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        topProductsCtx.canvas.parentElement.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No product data available</p>';
+    }
+});
+</script>
 </body>
 </html>

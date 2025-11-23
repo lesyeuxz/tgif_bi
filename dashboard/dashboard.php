@@ -1,7 +1,4 @@
 <?php
-// ===============================
-// TGIF BI Dashboard Main Page
-// ===============================
 session_start();
 
 // Redirect if not logged in
@@ -150,7 +147,7 @@ async function updateDashboard() {
 
   } catch (error) {
     console.error("Error updating dashboard:", error);
-  }
+
 }
 
 // Initial load

@@ -17,14 +17,16 @@
     <!-- Sales Analytics -->
     <li class="menu-section">Sales Analytics</li>
     <li><a href="/tgif_bi/modules/sales/sales_overview.php">Sales Overview</a></li>
-    <li><a href="/tgif_bi/modules/sales/top_products.php">Top Products</a></li>
     <li><a href="/tgif_bi/modules/sales/sales_growth.php">Sales Growth</a></li>
+    <li><a href="/tgif_bi/modules/sales/reports/sales_performance_report.php">Sales Performance</a></li>
+    <li><a href="/tgif_bi/modules/sales/reports/sales_summary_report.php">Sales Summary</a></li>
 
     <!-- Inventory Insights -->
     <li class="menu-section">Inventory Insights</li>
-    <li><a href="/tgif_bi/modules/inventory/inventory_summary.php">Inventory Summary</a></li>
-    <li><a href="/tgif_bi/modules/inventory/low_stock.php">Low Stock Alerts</a></li>
-    <li><a href="/tgif_bi/modules/inventory/supplier_performance.php">Supplier Performance</a></li>
+    <li><a href="/tgif_bi/modules/inventory/inventory_history.php">Inventory History</a></li>
+    <li><a href="/tgif_bi/modules/inventory/reports/stock_transactions.php">Stock Transactions</a></li>
+    <li><a href="/tgif_bi/modules/inventory/reports/location_reports.php">Location Reports</a></li>
+    <li><a href="/tgif_bi/modules/inventory/reports/purchase_order_reports.php">Purchase Orders</a></li>
 
     <!-- Financial Analytics -->
     <li class="menu-section">Financial Analytics</li>
