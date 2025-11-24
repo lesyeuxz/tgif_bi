@@ -8,16 +8,12 @@
   <ul class="menu">
     <!-- Dashboard -->
     <li>
-      <a href="/tgif_bi/dashboard/dashboard.php">
-        <i class="icon">📊</i>
-        <span>Dashboard</span>
       </a>
     </li>
 
     <!-- Sales Analytics -->
     <li class="menu-section">Sales Analytics</li>
     <li><a href="/tgif_bi/modules/sales/sales_overview.php">Sales Overview</a></li>
-    <li><a href="/tgif_bi/modules/sales/sales_growth.php">Sales Growth</a></li>
     <li><a href="/tgif_bi/modules/sales/reports/sales_performance_report.php">Sales Performance</a></li>
     <li><a href="/tgif_bi/modules/sales/reports/sales_summary_report.php">Sales Summary</a></li>
 
@@ -36,7 +32,6 @@
 
     <!-- Administration -->
     <li class="menu-section">Administration</li>
-    <li><a href="/tgif_bi/modules/admin/manage_reports.php">Manage Reports</a></li>
     <li><a href="/tgif_bi/modules/admin/user_logs.php">User Activity Logs</a></li>
     <li><a href="/tgif_bi/modules/admin/system_settings.php">System Settings</a></li>
 

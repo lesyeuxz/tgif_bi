@@ -50,8 +50,8 @@ if ($user = $result->fetch_assoc()) {
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
 
-        // Redirect to dashboard (absolute path)
-        header('Location: /tgif_bi/dashboard/dashboard.php');
+        // Redirect to sales overview (absolute path)
+        header('Location: /tgif_bi/modules/sales/sales_overview.php');
         exit;
     }
 }

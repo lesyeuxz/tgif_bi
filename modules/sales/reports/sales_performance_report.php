@@ -86,7 +86,7 @@ if ($exportFormat) {
         .no-data-message {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: #ffffffff;
             font-style: italic;
         }
     </style>
@@ -157,6 +157,7 @@ if ($exportFormat) {
         </div>
     </div>
 </main>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
